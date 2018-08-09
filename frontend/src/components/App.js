@@ -10,39 +10,41 @@ class App extends Component {
     discovered: []
   }
   componentDidMount() {
-    axios.get('http://localhost:3001/acolyte').then((res) => {
-      console.log(res.data);
-      this.setState({
-        acolytes: _.mapKeys(res.data, 'LocTag'),
-      })
+    axios.get('/acolyte').then(({ data }) => {
+      this.handleRefresh(data);
     })
     socket.on('refresh-acolytes', ({data}) => {
       console.log(data);
-      this.setState({
-        acolytes: _.mapKeys(data, 'LocTag')
-      })
+      this.handleRefresh(data);
     });
   }
+
+  handleRefresh = (data) => {
+    var discovered = [];
+    for(let key in data) {
+      if(data[key].Discovered) {
+        var name = data[key].LocTag;
+        discovered.push(name);
+        if(!this.state.discovered.find((acolyte) => acolyte === name)) {
+          this.notification(name);
+        }
+      }
+    }
+
+    this.setState({
+      acolytes: _.mapKeys(data, 'LocTag'),
+      discovered
+    })
+  }
+
   notification = (name) => {
     if (Notification.permission === "granted")  {
-      if(!this.state.discovered.find((acolyte) => {
-        return acolyte === name;
-      })) {
-        var notification = new Notification(`${name} is DETECTED!`);
-        this.setState({
-          discovered: _.map(this.state.acolytes, ({Discovered, LocTag}) => {
-            return Discovered ? LocTag : false;
-          })
-        })
-      }
+      var notification = new Notification(`${name} is DETECTED!`);
     }
   }
   render() {
     if(!this.state.acolytes) {return (<div></div>)}
       const acolytes = _.map(this.state.acolytes, acolyte => {
-        if(acolyte.Discovered) {
-          this.notification(acolyte.LocTag);
-        }
         return (
           <h1 key={acolyte.LocTag} className="App-title">{acolyte.LocTag}: {acolyte.Discovered ? 'YES' : 'NO'}</h1>
         )
