@@ -10,7 +10,7 @@ class App extends Component {
     discovered: []
   }
   componentDidMount() {
-    axios.get('/acolyte').then(({ data }) => {
+    axios.get(`${process.env.REACT_APP_API_URL}/acolyte`).then(({ data }) => {
       this.handleRefresh(data);
     })
     socket.on('refresh-acolytes', ({data}) => {
